@@ -10,7 +10,7 @@ Zooming into the second portion of the diagram, we can focus on the purpose of t
 
 ![Deploy Diagram](assets/deploy-pipeline.png)
 
-This is a **local-hardware variant** of the original `flowable-deploy-template`: instead of two separate 3-node `kind` clusters running inside a GitHub Codespace (heavy enough to strain a Codespaces VM), everything here runs on a single 3-node `kind` cluster on your own machine (via Docker Desktop or any Docker engine `kind` supports). One cluster hosts all three demo environments as namespaces (`dev`, `test`, `stg`), and there's a single shared Traefik install instead of two duplicated ones.
+This is a **local-hardware variant** of the original `flowable-deploy-template`: instead of two separate 3-node `kind` clusters running inside a GitHub Codespace (heavy enough to strain a Codespaces VM), everything here runs on one single-node `kind` cluster on your own machine (via Docker Desktop or any Docker engine `kind` supports). That one node hosts all three demo environments as namespaces (`dev`, `test`, `stg`), with a single shared Traefik install instead of two duplicated ones.
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ export FLOWABLE_LICENSE_KEY="$(cat /path/to/flowable.license)"
 ```
 ./create-env.sh --all
 ```
-This starts the shared Postgres + Elasticsearch containers via `docker-compose`, creates a single 3-node `kind` cluster named `local` (plus a local image registry and Traefik), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
+This starts the shared Postgres + Elasticsearch containers via `docker-compose`, creates a single-node `kind` cluster named `local` (plus a local image registry and Traefik), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
 
 4) Observe with `k9s` (optional):
 ```
