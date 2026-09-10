@@ -40,10 +40,10 @@ flowable:
     envVariables:
       flowable.inspect.enabled: "true"
       server.context: /test/work
-      spring.elasticsearch.uris: "http://host.docker.internal:9200"
+      spring.elasticsearch.uris: "http://docker-flowable-index-1:9200"
       flowable.indexing.index-name-prefix: "test-flowable-"
       spring.datasource.driver-class-name: org.postgresql.Driver
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/test_work
+      spring.datasource.url: jdbc:postgresql://docker-flowable-db-1:5432/test_work
       spring.datasource.username: flowable
       spring.datasource.password: flowable
       flowable.platform.enable-audit-log: "true"
@@ -86,7 +86,7 @@ flowable:
     envVariables:
       server.context: /test/control
       spring.datasource.driver-class-name: org.postgresql.Driver
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/test_control
+      spring.datasource.url: jdbc:postgresql://docker-flowable-db-1:5432/test_control
       spring.datasource.username: flowable
       spring.datasource.password: flowable
     resources:

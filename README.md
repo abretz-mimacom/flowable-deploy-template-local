@@ -10,11 +10,11 @@ Zooming into the second portion of the diagram, we can focus on the purpose of t
 
 ![Deploy Diagram](assets/deploy-pipeline.png)
 
-This is a **local-hardware variant** of the original `flowable-deploy-template`: instead of two separate 3-node `kind` clusters running inside a GitHub Codespace (heavy enough to strain a Codespaces VM), everything here runs on a single Docker Desktop Kubernetes node on your own machine. One cluster hosts all three demo environments as namespaces (`dev`, `test`, `stg`), and there's a single shared ingress-nginx install instead of two duplicated ones.
+This is a **local-hardware variant** of the original `flowable-deploy-template`: instead of two separate 3-node `kind` clusters running inside a GitHub Codespace (heavy enough to strain a Codespaces VM), everything here runs on a single 3-node `kind` cluster on your own machine (via Docker Desktop or any Docker engine `kind` supports). One cluster hosts all three demo environments as namespaces (`dev`, `test`, `stg`), and there's a single shared ingress-nginx install instead of two duplicated ones.
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/), with **Kubernetes enabled**: Settings -> Kubernetes -> check "Enable Kubernetes" -> Apply & Restart. This adds and selects a `docker-desktop` kubectl context.
+- Docker (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/)) and `kind` (`brew install kind` on macOS).
 - `helm`, `kubectl`, `yq` (`brew install helm kubectl yq` on macOS).
 - A Flowable Artifactory account (`FLOWABLE_REPO_USER` / `FLOWABLE_REPO_PASSWORD`) and a Flowable license file, needed to pull the Flowable Helm chart and images.
 - Optional: [k9s](https://k9scli.io/) for browsing pods/logs (`brew install derailed/k9s/k9s`).
@@ -40,19 +40,19 @@ export FLOWABLE_LICENSE_KEY="$(cat /path/to/flowable.license)"
 ```
 ./create-env.sh --all
 ```
-This starts the shared Postgres + Elasticsearch containers via `docker-compose`, installs ingress-nginx into your Docker Desktop cluster, and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
+This starts the shared Postgres + Elasticsearch containers via `docker-compose`, creates a single 3-node `kind` cluster named `local` (plus a local image registry and ingress-nginx), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
 
 4) Observe with `k9s` (optional):
 ```
 k9s
 ```
-Since there's only one cluster now, there's no cluster-picker step - `k9s` opens straight into your `docker-desktop` context. Switch namespaces with `:ns` to watch `dev`/`test`/`stg` come up to `STATUS=Running`.
+Since there's only one cluster now, `k9s` opens straight into the `kind-local` context (no cluster-picker step needed). Switch namespaces with `:ns` to watch `dev`/`test`/`stg` come up to `STATUS=Running`.
 
 ![alt text](assets/flowable-dev-boot.png)
 
 ### Access the deployment
 
-Because ingress-nginx is installed as a `LoadBalancer` service, Docker Desktop binds it straight to `localhost` - no port-forwarding step needed:
+The kind cluster's control-plane node maps host ports 80/443 straight through to the ingress-nginx pod (via `kind-cluster-setup.sh`'s `extraPortMappings`), so `localhost` reaches it directly - no port-forwarding step needed:
 
 - **dev**: [http://localhost/dev/work/](http://localhost/dev/work/), [http://localhost/dev/design/](http://localhost/dev/design/), [http://localhost/dev/control/](http://localhost/dev/control/)
 - **test**: [http://localhost/test/work/](http://localhost/test/work/), [http://localhost/test/control/](http://localhost/test/control/)
@@ -90,6 +90,6 @@ Listening for Jobs
 ### Tearing down
 
 ```
-./delete-env.sh --all
+./delete-env.sh
 ```
-This removes the `dev`/`test`/`stg` Helm releases and namespaces, and stops the shared Postgres/Elasticsearch containers. Your Docker Desktop Kubernetes cluster itself is left running.
+This deletes the `local` kind cluster entirely and stops the shared Postgres/Elasticsearch containers.

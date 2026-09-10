@@ -1,12 +1,14 @@
 #!/bin/bash
 set -o errexit
 
-# Deploys the Flowable Platform locally on Docker Desktop's built-in Kubernetes.
+# Deploys the Flowable Platform locally on a single kind cluster.
 # Usage:
-#   ./create-env.sh --all          # deploy dev, test and stg into the docker-desktop cluster
+#   ./create-env.sh --all          # deploy dev, test and stg into the local kind cluster
 #   ./create-env.sh <namespace>    # deploy a single namespace (dev|test|stg)
 
+CLUSTER_NAME="${CLUSTER_NAME:-local}"
 DISABLE_ARC="${DISABLE_ARC:-true}"
+REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Rewriting env-specific values for local access"
 for ns in dev test stg; do
@@ -21,10 +23,6 @@ if [ -n "$GITHUB_USER" ]; then
 	yq -i ".flowable.design.envVariables.\"flowable.design.git.repo.uri\" = \"git@github.com:${GITHUB_USER}/flowable-models-repo.git\"" helm/dev/values.yaml
 fi
 
-REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-yq -i ".flowable.design.extraVolumes[0].hostPath.path = \"${REPO_DIR}/docker/jar-exports\"" helm/dev/values.yaml
-yq -i ".flowable.design.extraVolumes[1].hostPath.path = \"${REPO_DIR}/docker/.ssh\"" helm/dev/values.yaml
-
 if [ ! -d "docker/.ssh" ]; then
 	echo "Setting up SSH keys for flowable-design's git repo access (reusing your own key, read-only mount)"
 	mkdir -p docker/.ssh
@@ -37,14 +35,24 @@ fi
 echo "Starting shared Postgres + Elasticsearch containers"
 docker-compose -f docker/docker-compose.yml up -d
 
-echo "Setting up the local Docker Desktop Kubernetes cluster"
-"$(dirname "$0")/scripts/docker-desktop-cluster-setup.sh" "$DISABLE_ARC"
+echo "Setting up the local kind cluster"
+export EXTRA_MOUNT_HOST_PATH="${REPO_DIR}/docker"
+"$REPO_DIR/scripts/kind-cluster-setup.sh" "$CLUSTER_NAME" "$DISABLE_ARC"
+
+echo "Connecting the shared Postgres/Elasticsearch containers to the kind network"
+for container in docker-flowable-db-1 docker-flowable-index-1; do
+	if [ "$(docker inspect -f='{{json .NetworkSettings.Networks.kind}}' "$container" 2>/dev/null)" = 'null' ]; then
+		docker network connect "kind" "$container"
+	fi
+done
+
+kubectl config use-context "kind-${CLUSTER_NAME}"
 
 deploy_flowable() {
 	local namespace="$1"
 	local release_name="$2"
 	echo "Deploying Flowable Platform in namespace '$namespace' with release name '$release_name'"
-	"$(dirname "$0")/scripts/deploy-flowable-platform.sh" "$namespace" "$release_name"
+	"$REPO_DIR/scripts/deploy-flowable-platform.sh" "$namespace" "$release_name"
 }
 
 if [[ "$1" == "--all" ]]; then

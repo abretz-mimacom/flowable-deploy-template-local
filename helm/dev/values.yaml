@@ -41,10 +41,10 @@ flowable:
     envVariables:
       flowable.inspect.enabled: "true"
       server.context: /dev/work
-      spring.elasticsearch.uris: "http://host.docker.internal:9200"
+      spring.elasticsearch.uris: "http://docker-flowable-index-1:9200"
       flowable.indexing.index-name-prefix: "dev-flowable-"
       spring.datasource.driver-class-name: org.postgresql.Driver
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/dev_work
+      spring.datasource.url: jdbc:postgresql://docker-flowable-db-1:5432/dev_work
       spring.datasource.username: flowable
       spring.datasource.password: flowable
       flowable.platform.enable-audit-log: "true"
@@ -94,7 +94,7 @@ flowable:
       flowable.design.model-locking.auto-lock-on-create: true
       server.context: /dev/design
       spring.datasource.driver-class-name: org.postgresql.Driver
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/dev_design
+      spring.datasource.url: jdbc:postgresql://docker-flowable-db-1:5432/dev_design
       spring.datasource.username: flowable
       spring.datasource.password: flowable
       flowable.design.git.repo.enabled: true
@@ -110,16 +110,16 @@ flowable:
       #      image:
       #       repository: artifacts.flowable.com/docker-local/flowable/flowable-design
     extraVolumes:
-      # These two hostPath.path values are rewritten by create-env.sh to the
-      # repo's absolute local path (Docker Desktop's Kubernetes can mount host
-      # paths directly, no extraMounts/registry indirection needed).
+      # These paths are inside the kind node container, mounted there from
+      # the repo's docker/ folder via kind-cluster-setup.sh's extraMounts
+      # (EXTRA_MOUNT_HOST_PATH -> /extra-mount).
       - name: additional-classpath
         hostPath:
-          path: REPLACED_BY_CREATE_ENV/docker/jar-exports
+          path: /extra-mount/jar-exports
           type: Directory
       - name: ssh-keys
         hostPath:
-          path: REPLACED_BY_CREATE_ENV/docker/.ssh
+          path: /extra-mount/.ssh
           type: Directory
     extraVolumeMounts:
       - name: additional-classpath
@@ -142,7 +142,7 @@ flowable:
     envVariables:
       server.context: /dev/control
       spring.datasource.driver-class-name: org.postgresql.Driver
-      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/dev_control
+      spring.datasource.url: jdbc:postgresql://docker-flowable-db-1:5432/dev_control
       spring.datasource.username: flowable
       spring.datasource.password: flowable
     resources:
