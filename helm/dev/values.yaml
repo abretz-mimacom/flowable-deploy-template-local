@@ -1,0 +1,164 @@
+flowable:
+  ingress:
+    #     # Enable/disbale the ingress configuration for the Helm chart.
+    enabled: false
+    host: "http://localhost/dev"
+  #   # Define if https should be used to access the service urls (this is highly suggested)
+  #   tls: true
+  #   # Ingress proxy settings in case of custom frontend (CORS)
+  #   allowOriginEnabled: true
+  #   allowOriginUrl: "*"
+  #   domain: projects.flowable.io
+  #   bodySize: "20m"
+  #   ingressClass: external
+
+  postgres:
+    enabled: false
+  engage:
+    enabled: false
+  work:
+    enabled: true
+    image:
+      #    repository: localhost:5001/myflowable
+      # repository: ghcr.io/abretz-mimacom/flowable-models-public
+      # tag: latest
+      tag: 3.17.2
+      # tag: 2025.1.01
+    replicas: 1 # multi-node deployment
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "1.5Gi"
+      limits:
+        cpu: "800m"
+        memory: "4Gi"
+    metrics:
+      enabled: true
+    javaOpts: "-XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0"
+    contextPath: /dev/work
+    management:
+      enabled: true
+    envVariables:
+      flowable.inspect.enabled: "true"
+      server.context: /dev/work
+      spring.elasticsearch.uris: "http://host.docker.internal:9200"
+      flowable.indexing.index-name-prefix: "dev-flowable-"
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/dev_work
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+      flowable.platform.enable-audit-log: "true"
+      management.elastic.metrics.export.enabled: "true"
+      flowable.indexing.enabled: "true"
+      # extraVolumes:
+      #   - name: additional-classpath
+      #     hostPath:
+      #       path: /Users/aaron.bretz/.m2/repository/org/flowable/jobapplication/0.0.1-SNAPSHOT/
+      #       type: Directory
+      # extraVolumeMounts:
+      #   - name: additional-classpath
+      #     mountPath: /additional-classpath/
+      # initContainers:
+      #   - name: copy-jar
+      #     image: busybox
+      #     command: ["sh", "-c", "cp /jars/my-lib.jar /additional-classpath/"]
+      #     volumeMounts:
+      #       - name: additional-classpath
+      #         mountPath: /additonal-classpath
+      #       - name: jar-source
+      #         mountPath:
+      #     volumeMounts:
+      #       - name: additional-classpath
+      #         mountPath: /additional-classpath/
+      # extraImagePullSecrets: flw-docker-auth
+    storage:
+      provisioner: rancher.io/local-path
+      storageClass: standard
+  elasticsearch:
+    enabled: false
+  design:
+    enabled: true
+    image:
+      # tag: latest
+      tag: 3.17.2
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "1.5Gi"
+      limits:
+        cpu: "500m"
+        memory: "1.5Gi"
+    contextPath: /dev/design
+    envVariables:
+      flowable.design.model-locking.enabled: true
+      flowable.design.model-locking.auto-lock-on-create: true
+      server.context: /dev/design
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/dev_design
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+      flowable.design.git.repo.enabled: true
+      flowable.design.git.repo.clone-dir: "${LOCAL_REPO_DIR:additional-classpath/flowable-models-repo}"
+      flowable.design.git.repo.remote-branch: master
+      flowable.design.git.repo.uri: git@github.com:abretz-mimacom/flowable-models-repo.git
+      logging.level.org.apache.sshd: DEBUG
+      #      application.design.ai.type: openai
+      #      spring.ai.openai.api-key: ""
+      #      spring.ai.openai.chat.options.temperature: 0.3
+      #      spring.ai.openai.chat.options.model: gpt-4o
+      #      extraImagePullSecrets: flw-docker-auth
+      #      image:
+      #       repository: artifacts.flowable.com/docker-local/flowable/flowable-design
+    extraVolumes:
+      # These two hostPath.path values are rewritten by create-env.sh to the
+      # repo's absolute local path (Docker Desktop's Kubernetes can mount host
+      # paths directly, no extraMounts/registry indirection needed).
+      - name: additional-classpath
+        hostPath:
+          path: REPLACED_BY_CREATE_ENV/docker/jar-exports
+          type: Directory
+      - name: ssh-keys
+        hostPath:
+          path: REPLACED_BY_CREATE_ENV/docker/.ssh
+          type: Directory
+    extraVolumeMounts:
+      - name: additional-classpath
+        mountPath: /additional-classpath
+      - name: ssh-keys
+        mountPath: /home/flowable/.ssh
+        # envSecrets:
+        #   - name: GITHUB_OAUTH_CLIENT_SECRET
+        #     secretName: flowable-github-oauth
+        #     secretKey: clientSecret
+        #   - name: GITHUB_OAUTH_CLIENT_ID
+        #     secretName: flowable-github-oauth
+        #     secretKey: clientId
+  control:
+    enabled: true
+    contextPath: /dev/control
+    image:
+      # tag: latest
+      tag: 3.17.2
+    envVariables:
+      server.context: /dev/control
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/dev_control
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "1.5Gi"
+      limits:
+        cpu: "500m"
+        memory: "1.5Gi"
+  flowable:
+    dockerAuthSecret: flowable-flowable-regcred
+    extensionPoints:
+      GITHUB_USER: ${GITHUB_USER}
+  prometheus:
+    enabled: false
+    monitoring:
+      enabled: true
+      global:
+        namespace: flowable

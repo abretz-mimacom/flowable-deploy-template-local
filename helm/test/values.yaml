@@ -1,0 +1,106 @@
+flowable:
+  ingress:
+    #     # Enable/disbale the ingress configuration for the Helm chart.
+    enabled: false
+    host: "http://localhost/test"
+  #   # Define if https should be used to access the service urls (this is highly suggested)
+  #   tls: true
+  #   # Ingress proxy settings in case of custom frontend (CORS)
+  #   allowOriginEnabled: true
+  #   allowOriginUrl: "*"
+  #   domain: projects.flowable.io
+  #   bodySize: "20m"
+  #   ingressClass: external
+
+  postgres:
+    enabled: false
+  engage:
+    enabled: false
+  work:
+    enabled: true
+    image:
+      # repository: ghcr.io/abretz-mimacom/flowable-models-public
+      # tag: latest
+      # tag: 1.16.0
+      tag: 2025.2.04
+    replicas: 1 # multi-node deployment
+    contextPath: /test/work
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "1.5Gi"
+      limits:
+        cpu: "800m"
+        memory: "4Gi"
+    metrics:
+      enabled: true
+    javaOpts: "-XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0"
+    management:
+      enabled: true
+    envVariables:
+      flowable.inspect.enabled: "true"
+      server.context: /test/work
+      spring.elasticsearch.uris: "http://host.docker.internal:9200"
+      flowable.indexing.index-name-prefix: "test-flowable-"
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/test_work
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+      flowable.platform.enable-audit-log: "true"
+      management.elastic.metrics.export.enabled: "true"
+      flowable.indexing.enabled: "true"
+      # extraVolumes:
+      #   - name: additional-classpath
+      #     hostPath:
+      #       path: /Users/aaron.bretz/.m2/repository/org/flowable/jobapplication/0.0.1-SNAPSHOT/
+      #       type: Directory
+      # extraVolumeMounts:
+      #   - name: additional-classpath
+      #     mountPath: /additional-classpath/
+      # initContainers:
+      #   - name: copy-jar
+      #     image: busybox
+      #     command: ["sh", "-c", "cp /jars/my-lib.jar /additional-classpath/"]
+      #     volumeMounts:
+      #       - name: additional-classpath
+      #         mountPath: /additonal-classpath
+      #       - name: jar-source
+      #         mountPath:
+      #     volumeMounts:
+      #       - name: additional-classpath
+      #         mountPath: /additional-classpath/
+      # extraImagePullSecrets: flw-docker-auth
+    storage:
+      provisioner: rancher.io/local-path
+      storageClass: standard
+  elasticsearch:
+    enabled: false
+  design:
+    enabled: false
+  control:
+    enabled: true
+    contextPath: /test/control
+    image:
+      # tag: latest
+      tag: 2025.2.04
+    envVariables:
+      server.context: /test/control
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/test_control
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "1.5Gi"
+      limits:
+        cpu: "500m"
+        memory: "1.5Gi"
+  flowable:
+    dockerAuthSecret: flowable-flowable-regcred
+  prometheus:
+    enabled: false
+    monitoring:
+      enabled: true
+      global:
+        namespace: flowable

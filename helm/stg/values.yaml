@@ -1,0 +1,178 @@
+global:
+  security:
+    allowInsecureImages: true
+flowable:
+  ingress:
+    # Leave disabled to define our own ingress in templates/
+    enabled: false
+    host: "http://localhost/stg"
+  postgres:
+    enabled: false
+    image:
+      repository: bitnamilegacy/postgresql
+      tag: 17.5.0
+    service:
+      name: postgres
+    envVariables:
+      POSTGRES_MULTIPLE_DATABASES: "keycloak,internal"
+    primary:
+      extraEnvVars:
+        - name: POSTGRESQL_MAX_CONNECTIONS
+          value: "400"
+      resources:
+        requests:
+          cpu: "200m"
+          memory: "500Mi"
+        limits:
+          cpu: "500m"
+          memory: "1Gi"
+  engage:
+    enabled: false
+  work:
+    enabled: true
+    image:
+      #    repository: localhost:5001/myflowable
+      # tag: latest
+      tag: 2025.2.03
+    replicas: 1 # multi-node deployment
+    metrics:
+      enabled: true
+    javaOpts: "-XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0"
+    contextPath: /stg/work
+    management:
+      enabled: true
+    extraEnvFrom:
+      - configMapRef:
+          name: oauth2-generic-config
+    envVariables:
+      server.contextPath: /stg/work
+      server.tomcat.redirect-context-root: false
+      server.forward-headers-strategy: framework
+      flowable.inspect.enabled: "true"
+      spring.elasticsearch.uris: "http://host.docker.internal:9200"
+      flowable.indexing.index-name-prefix: "stg-flowable-"
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/stg_work
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+      flowable.platform.enable-audit-log: "true"
+      management.elastic.metrics.export.enabled: "true"
+      flowable.indexing.enabled: "true"
+      application.security.type: oauth2
+      spring.security.oauth2.client.registration.github.redirect-uri: "http://localhost/stg/work/login/oauth2/code/github"
+      flowable.security.oauth2.client.mapper.user-definition-key-attribute: location
+      flowable.security.oauth2.post-logout-redirect-url: "http://localhost/stg/work/#/"
+      flowable.security.oauth2.client.mapper.default-user-definition-key: user-default
+      # spring.security.oauth2.resourceserver.jwt.issuer-uri: https://github.com/login/oauth/access_token
+      flowable.security.oauth2.resourceserver.jwt.principal-claim-name: id
+      flowable.security.oauth2.resourceserver.mapper.user-definition-key-attribute: location
+      flowable.security.oauth2.resourceserver.mapper.default-user-definition-key: user-admin
+      flowable.security.basic-auth.enabled: "false"
+      flowable.security.basic-auth.username: admin
+      flowable.security.basic-auth.password: ${GITHUB_OAUTH_CLIENT_SECRET}
+      flowable.security.basic-auth.granted-authorities: USER_DEFINITION_KEY_user-admin,GROUP_flowableAdministrator
+      logging.level.org.springframework.security: DEBUG
+    envSecrets:
+      - name: GITHUB_OAUTH_CLIENT_ID
+        secretName: flowable-github-oauth
+        secretKey: clientId
+      - name: GITHUB_OAUTH_CLIENT_SECRET
+        secretName: flowable-github-oauth
+        secretKey: clientSecret
+        # extraVolumes:
+        #   - name: additional-classpath
+        #     hostPath:
+        #       path: /Users/aaron.bretz/.m2/repository/org/flowable/jobapplication/0.0.1-SNAPSHOT/
+        #       type: Directory
+        # extraVolumeMounts:
+        #   - name: additional-classpath
+        #     mountPath: /additional-classpath/
+        # initContainers:
+        #   - name: copy-jar
+        #     image: busybox
+        #     command: ["sh", "-c", "cp /jars/my-lib.jar /additional-classpath/"]
+        #     volumeMounts:
+        #       - name: additional-classpath
+        #         mountPath: /additonal-classpath
+        #       - name: jar-source
+        #         mountPath:
+        #     volumeMounts:
+        #       - name: additional-classpath
+        #         mountPath: /additional-classpath/
+        # extraImagePullSecrets: flw-docker-auth
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "1024Mi"
+      limits:
+        cpu: "1000m"
+        memory: "4096Mi"
+    storage:
+      provisioner: rancher.io/local-path
+      storageClass: standard
+  elasticsearch:
+    enabled: false
+    image:
+      repository: bitnamilegacy/elasticsearch
+      tag: 8.18.0
+    nodeGroup: master
+    master:
+      resources:
+        requests:
+          cpu: 250m
+          memory: 1024Mi
+        limits:
+          cpu: 500m
+          memory: 2048Mi
+  design:
+    enabled: false
+  control:
+    enabled: true
+    image:
+      # tag: latest
+      tag: 2025.2.03
+    contextPath: /stg/control
+    extraEnvFrom:
+      - configMapRef:
+          name: oauth2-generic-config
+    envVariables:
+      # flowable.control.app.security.type: basic
+      # flowable.control.app.cluster-config.password: ${GITHUB_OAUTH_CLIENT_SECRET}
+      server.contextPath: /stg/control
+      spring.datasource.driver-class-name: org.postgresql.Driver
+      spring.datasource.url: jdbc:postgresql://host.docker.internal:5432/stg_control
+      spring.datasource.username: flowable
+      spring.datasource.password: flowable
+      # flowable.control.app.cluster-config.authentication-type: basic
+      flowable.control.app.security.type: oauth2
+      flowable.control.app.cluster-config.authentication-type: oauth2CurrentUser
+      spring.security.oauth2.client.registration.github.redirect-uri: http://localhost/stg/control/login/oauth2/code/github
+      flowable.control.app.security.oauth2.username-attribute: login
+      flowable.control.app.security.oauth2.authorities-attributes: location
+      flowable.control.app.security.oauth2.admin-authorities: user-admin
+      flowable.control.app.security.oauth2.post-logout-redirect-url: http://localhost/stg/control/#/
+      logging.level.org.springframework.security: DEBUG
+    envSecrets:
+      - name: GITHUB_OAUTH_CLIENT_SECRET
+        secretName: flowable-github-oauth
+        secretKey: clientSecret
+      - name: GITHUB_OAUTH_CLIENT_ID
+        secretName: flowable-github-oauth
+        secretKey: clientId
+    resources:
+      requests:
+        cpu: "300m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1024Mi"
+  flowable:
+    dockerAuthSecret: flowable-flowable-regcred
+    database:
+      username: flowable
+  prometheus:
+    enabled: false
+    monitoring:
+      enabled: true
+      global:
+        namespace: flowable
