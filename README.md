@@ -10,7 +10,7 @@ Zooming into the second portion of the diagram, we can focus on the purpose of t
 
 ![Deploy Diagram](assets/deploy-pipeline.png)
 
-This is a **local-hardware variant** of the original `flowable-deploy-template`: instead of two separate 3-node `kind` clusters running inside a GitHub Codespace (heavy enough to strain a Codespaces VM), everything here runs on a single 3-node `kind` cluster on your own machine (via Docker Desktop or any Docker engine `kind` supports). One cluster hosts all three demo environments as namespaces (`dev`, `test`, `stg`), and there's a single shared ingress-nginx install instead of two duplicated ones.
+This is a **local-hardware variant** of the original `flowable-deploy-template`: instead of two separate 3-node `kind` clusters running inside a GitHub Codespace (heavy enough to strain a Codespaces VM), everything here runs on a single 3-node `kind` cluster on your own machine (via Docker Desktop or any Docker engine `kind` supports). One cluster hosts all three demo environments as namespaces (`dev`, `test`, `stg`), and there's a single shared Traefik install instead of two duplicated ones.
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ export FLOWABLE_LICENSE_KEY="$(cat /path/to/flowable.license)"
 ```
 ./create-env.sh --all
 ```
-This starts the shared Postgres + Elasticsearch containers via `docker-compose`, creates a single 3-node `kind` cluster named `local` (plus a local image registry and ingress-nginx), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
+This starts the shared Postgres + Elasticsearch containers via `docker-compose`, creates a single 3-node `kind` cluster named `local` (plus a local image registry and Traefik), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
 
 4) Observe with `k9s` (optional):
 ```
@@ -52,7 +52,7 @@ Since there's only one cluster now, `k9s` opens straight into the `kind-local` c
 
 ### Access the deployment
 
-The kind cluster's control-plane node maps host ports 80/443 straight through to the ingress-nginx pod (via `kind-cluster-setup.sh`'s `extraPortMappings`), so `localhost` reaches it directly - no port-forwarding step needed:
+The kind cluster's control-plane node maps host ports 80/443 straight through to the Traefik pod (via `kind-cluster-setup.sh`'s `extraPortMappings`), so `localhost` reaches it directly - no port-forwarding step needed:
 
 - **dev**: [http://localhost/dev/work/](http://localhost/dev/work/), [http://localhost/dev/design/](http://localhost/dev/design/), [http://localhost/dev/control/](http://localhost/dev/control/)
 - **test**: [http://localhost/test/work/](http://localhost/test/work/), [http://localhost/test/control/](http://localhost/test/control/)
