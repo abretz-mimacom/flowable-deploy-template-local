@@ -13,6 +13,7 @@ data:
   spring.security.oauth2.client.registration.keycloak.client-name: flowable-stg
   spring.security.oauth2.client.registration.keycloak.scope: "openid,profile,email"
   spring.security.oauth2.client.registration.keycloak.authorization-grant-type: authorization_code
+  spring.security.oauth2.client.registration.keycloak.redirect-uri: "http://localhost/stg/work/login/oauth2/code/keycloak"
   spring.security.oauth2.client.provider.keycloak.authorization-uri: http://localhost:9095/realms/flowable/protocol/openid-connect/auth
   spring.security.oauth2.client.provider.keycloak.token-uri: http://docker-flowable-keycloak-1:8080/realms/flowable/protocol/openid-connect/token
   spring.security.oauth2.client.provider.keycloak.user-info-uri: http://docker-flowable-keycloak-1:8080/realms/flowable/protocol/openid-connect/userinfo
@@ -29,6 +30,7 @@ data:
   spring.security.oauth2.client.registration.keycloak.client-name: flowable-stg
   spring.security.oauth2.client.registration.keycloak.scope: "openid,profile,email"
   spring.security.oauth2.client.registration.keycloak.authorization-grant-type: authorization_code
+  spring.security.oauth2.client.registration.keycloak.redirect-uri: "http://localhost/stg/control/login/oauth2/code/keycloak"
   spring.security.oauth2.client.provider.keycloak.authorization-uri: http://localhost:9095/realms/flowable/protocol/openid-connect/auth
   spring.security.oauth2.client.provider.keycloak.token-uri: http://docker-flowable-keycloak-1:8080/realms/flowable/protocol/openid-connect/token
   spring.security.oauth2.client.provider.keycloak.user-info-uri: http://docker-flowable-keycloak-1:8080/realms/flowable/protocol/openid-connect/userinfo

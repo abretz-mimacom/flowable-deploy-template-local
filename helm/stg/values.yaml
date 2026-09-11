@@ -70,27 +70,27 @@ flowable:
       flowable.security.basic-auth.password: admin
       flowable.security.basic-auth.granted-authorities: USER_DEFINITION_KEY_user-admin,GROUP_flowableAdministrator
       logging.level.org.springframework.security: DEBUG
-        # extraVolumes:
-        #   - name: additional-classpath
-        #     hostPath:
-        #       path: /Users/aaron.bretz/.m2/repository/org/flowable/jobapplication/0.0.1-SNAPSHOT/
-        #       type: Directory
-        # extraVolumeMounts:
-        #   - name: additional-classpath
-        #     mountPath: /additional-classpath/
-        # initContainers:
-        #   - name: copy-jar
-        #     image: busybox
-        #     command: ["sh", "-c", "cp /jars/my-lib.jar /additional-classpath/"]
-        #     volumeMounts:
-        #       - name: additional-classpath
-        #         mountPath: /additonal-classpath
-        #       - name: jar-source
-        #         mountPath:
-        #     volumeMounts:
-        #       - name: additional-classpath
-        #         mountPath: /additional-classpath/
-        # extraImagePullSecrets: flw-docker-auth
+      # extraVolumes:
+      #   - name: additional-classpath
+      #     hostPath:
+      #       path: /Users/aaron.bretz/.m2/repository/org/flowable/jobapplication/0.0.1-SNAPSHOT/
+      #       type: Directory
+      # extraVolumeMounts:
+      #   - name: additional-classpath
+      #     mountPath: /additional-classpath/
+      # initContainers:
+      #   - name: copy-jar
+      #     image: busybox
+      #     command: ["sh", "-c", "cp /jars/my-lib.jar /additional-classpath/"]
+      #     volumeMounts:
+      #       - name: additional-classpath
+      #         mountPath: /additonal-classpath
+      #       - name: jar-source
+      #         mountPath:
+      #     volumeMounts:
+      #       - name: additional-classpath
+      #         mountPath: /additional-classpath/
+      # extraImagePullSecrets: flw-docker-auth
     resources:
       requests:
         cpu: "300m"
