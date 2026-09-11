@@ -35,6 +35,25 @@ fi
 echo "Starting shared Postgres + Elasticsearch containers"
 docker-compose -f docker/docker-compose.yml up -d
 
+echo "Ensuring per-namespace databases exist"
+# docker/postgresql/create-multiple-postgresql-databases.sh only runs on a
+# brand-new data_db volume, so if that volume already existed (e.g. reused
+# from an earlier run before the namespace/db list changed) these can be
+# missing. Create any that aren't there yet, without touching existing data.
+echo "Waiting for Postgres to accept connections"
+for i in $(seq 1 30); do
+	docker exec docker-flowable-db-1 pg_isready -U flowable >/dev/null 2>&1 && break
+	sleep 2
+done
+for db in dev_work dev_control dev_design test_work test_control stg_work stg_control; do
+	exists="$(docker exec docker-flowable-db-1 psql -U flowable -d flowable -tAc "SELECT 1 FROM pg_database WHERE datname = '${db}'")"
+	if [ "$exists" != "1" ]; then
+		echo "  creating database '${db}'"
+		docker exec docker-flowable-db-1 psql -U flowable -d flowable -v ON_ERROR_STOP=1 -c "CREATE DATABASE ${db};"
+		docker exec docker-flowable-db-1 psql -U flowable -d flowable -v ON_ERROR_STOP=1 -c "GRANT ALL PRIVILEGES ON DATABASE ${db} TO flowable;"
+	fi
+done
+
 echo "Setting up the local kind cluster"
 export EXTRA_MOUNT_HOST_PATH="${REPO_DIR}/docker"
 "$REPO_DIR/scripts/kind-cluster-setup.sh" "$CLUSTER_NAME" "$DISABLE_ARC"
