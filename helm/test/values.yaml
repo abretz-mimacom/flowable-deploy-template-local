@@ -22,7 +22,7 @@ flowable:
       # repository: ghcr.io/abretz-mimacom/flowable-models-public
       # tag: latest
       # tag: 1.16.0
-      tag: 2025.2.04
+      tag: 2026.1.3
     replicas: 1 # multi-node deployment
     contextPath: /test/work
     resources:
@@ -82,7 +82,7 @@ flowable:
     contextPath: /test/control
     image:
       # tag: latest
-      tag: 2025.2.04
+      tag: 2026.1.3
     envVariables:
       server.context: /test/control
       spring.datasource.driver-class-name: org.postgresql.Driver

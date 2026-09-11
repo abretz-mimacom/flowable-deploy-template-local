@@ -33,7 +33,7 @@ flowable:
     image:
       #    repository: localhost:5001/myflowable
       # tag: latest
-      tag: 2025.2.03
+      tag: 2026.1.3
     replicas: 1 # multi-node deployment
     metrics:
       enabled: true
@@ -130,7 +130,7 @@ flowable:
     enabled: true
     image:
       # tag: latest
-      tag: 2025.2.03
+      tag: 2026.1.3
     contextPath: /stg/control
     extraEnvFrom:
       - configMapRef:
