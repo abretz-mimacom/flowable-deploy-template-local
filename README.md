@@ -40,7 +40,7 @@ export FLOWABLE_LICENSE_KEY="$(cat /path/to/flowable.license)"
 ```
 ./create-env.sh --all
 ```
-This starts the shared Postgres + Elasticsearch containers via `docker-compose`, creates a single-node `kind` cluster named `local` (plus a local image registry and Traefik), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with GitHub OAuth2 login). It takes a few minutes for everything to come up.
+This starts the shared Postgres + Elasticsearch + Keycloak + OpenLDAP containers via `docker-compose`, creates a single-node `kind` cluster named `local` (plus a local image registry and Traefik), and deploys Flowable into the `dev`, `test` and `stg` namespaces (dev: Work + Design + Control, test: Work + Control, stg: Work + Control with Keycloak login). It takes a few minutes for everything to come up.
 
 4) Observe with `k9s` (optional):
 ```
@@ -56,19 +56,24 @@ The kind cluster's control-plane node maps host ports 80/443 straight through to
 
 - **dev**: [http://localhost/dev/work/](http://localhost/dev/work/), [http://localhost/dev/design/](http://localhost/dev/design/), [http://localhost/dev/control/](http://localhost/dev/control/)
 - **test**: [http://localhost/test/work/](http://localhost/test/work/), [http://localhost/test/control/](http://localhost/test/control/)
-- **stg**: [http://localhost/stg/work/](http://localhost/stg/work/), [http://localhost/stg/control/](http://localhost/stg/control/) (GitHub OAuth2 login - see below)
+- **stg**: [http://localhost/stg/work/](http://localhost/stg/work/), [http://localhost/stg/control/](http://localhost/stg/control/) (Keycloak login - see below)
 
 You should be greeted with a Flowable login page:
 
 ![alt text](assets/flowable-login.png)
 
-Use `admin`/`test` for `dev` and `test`. `stg` uses GitHub OAuth2 instead of basic auth.
+Use `admin`/`test` for `dev` and `test`. `stg` uses OAuth2 login via a local Keycloak instance instead of basic auth.
 
-### stg's GitHub OAuth2 login (optional)
+### stg's Keycloak/LDAP login
 
-`stg` demonstrates logging in via a GitHub OAuth App instead of basic auth. To exercise it locally:
-1. Create a GitHub OAuth App (Settings -> Developer settings -> OAuth Apps) with callback URLs `http://localhost/stg/work/login/oauth2/code/github` and `http://localhost/stg/control/login/oauth2/code/github`.
-2. Export `OAUTH_CLIENT_ID` / `OAUTH_CLIENT_SECRET` before running `create-env.sh`, or `helm upgrade` the `stg` release afterwards with them set (they back the `oauth2-generic-config` ConfigMap consumed by `helm/templates/oauth2-configmap.yaml`).
+`stg` demonstrates OAuth2 login against a self-contained local identity stack - no external accounts or app registration needed, unlike the original Codespaces demo's GitHub OAuth App:
+
+- **OpenLDAP** (`docker/ldap/`) holds two demo users: `admin`/`admin` (member of the `flowableAdministrator` and `flowableUser` groups) and `user`/`user` (member of `flowableUser` only).
+- **Keycloak** (`docker/keycloak/flowable-realm.json`, imported automatically) federates those LDAP users/groups into a `flowable` realm, with `flowable-work` and `flowable-control` as separate OIDC clients. Its admin console is at [http://localhost:9095/](http://localhost:9095/) (`admin`/`admin`).
+- Log in at `http://localhost/stg/work/` with `admin`/`admin` for full (`flowableAdministrator`) access, or `user`/`user` for a regular member.
+- Browse the LDAP directory at [http://localhost:9096/](http://localhost:9096/) (phpLDAPadmin) if you want to add/inspect users - bind DN `cn=admin,dc=flowable,dc=local`, password `admin`.
+
+The client secrets in `helm/templates/oauth2-configmap.yaml` are fixed local-demo values matching the realm import - they never leave `localhost`, so there's nothing to configure before running `create-env.sh`.
 
 ### Optional: the CI/CD self-hosted-runner demo
 

@@ -1,0 +1,46 @@
+version: 1
+
+dn: ou=users,dc=flowable,dc=local
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: ou=groups,dc=flowable,dc=local
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+
+dn: cn=admin,ou=users,dc=flowable,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+cn: admin
+sn: Admin
+givenName: Flowable
+displayName: Flowable Admin
+mail: admin@flowable.local
+userPassword: admin
+
+dn: cn=user,ou=users,dc=flowable,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+cn: user
+sn: User
+givenName: Flowable
+displayName: Flowable User
+mail: user@flowable.local
+userPassword: user
+
+# Admin group - grants flowable-control admin access (see helm/stg/values.yaml)
+dn: cn=flowableAdministrator,ou=groups,dc=flowable,dc=local
+objectClass: groupOfNames
+objectClass: top
+cn: flowableAdministrator
+member: cn=admin,ou=users,dc=flowable,dc=local
+
+# General access group - every demo user is a member
+dn: cn=flowableUser,ou=groups,dc=flowable,dc=local
+objectClass: groupOfNames
+objectClass: top
+cn: flowableUser
+member: cn=admin,ou=users,dc=flowable,dc=local
+member: cn=user,ou=users,dc=flowable,dc=local

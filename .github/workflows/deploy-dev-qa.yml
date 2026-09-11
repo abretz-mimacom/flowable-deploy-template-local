@@ -100,8 +100,6 @@ jobs:
           FLOWABLE_LICENSE_KEY: ${{ secrets.FLOWABLE_LICENSE_KEY }}
           FLOWABLE_REPO_USER: ${{ secrets.FLOWABLE_REPO_USER }}
           FLOWABLE_REPO_PASSWORD: ${{ secrets.FLOWABLE_REPO_PASSWORD }}
-          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
 
   deploy-prod:
     runs-on: [self-hosted, local]

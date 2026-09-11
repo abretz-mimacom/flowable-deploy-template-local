@@ -49,45 +49,80 @@ services:
     #   - flowable-db
 
 
-  # openldap:
-  #   build:
-  #     context: openldap
-  #   environment:
-  #     LDAP_ORGANISATION: "Flowable Global Sales"
-  #     LDAP_DOMAIN: "global-sales.flowable.com"
-  #     LDAP_ADMIN_PASSWORD: "test"
-  #   ports:
-  #     - 389:389
-  #   volumes:
-  #     - data_ldap:/var/lib/ldap
-  #     - data_slapd:/etc/ldap/slapd.d
-  # keycloak:
-  #   image: keycloak/keycloak:20.0.0
-  #   # build:
-  #   #   context: keycloak
-  #   environment:
-  #     DB_DATABASE: keycloak
-  #     DB_ADDR: flowable-db
-  #     DB_USER: flowable
-  #     DB_PASSWORD: flowable
-  #     DB_VENDOR: postgres
-  #     # KEYCLOAK_URL: "https://vigilant-fortnight-q7g9q4pq57f9xx5-9095.app.github.dev/"
-  #     KEYCLOAK_ADMIN: admin
-  #     KEYCLOAK_ADMIN_PASSWORD: test
-  #     # See https://github.com/keycloak/keycloak-containers/blob/master/server/README.md
-  #     # KEYCLOAK_IMPORT: /tmp/oauth2-stack-realm.json
-  #     CUSTOM_REALM_KEYCLOAK_HOSTNAME: "https://vigilant-fortnight-q7g9q4pq57f9xx5-9095.app.github.dev/"
-  #     CUSTOM_REALM_LDAP_URI: "ldap://openldap:389"
-  #   command: ["start-dev"]
-  #   ports:
-  #     - 9095:8080
-  #   depends_on:
-  #     - flowable-db
+  flowable-openldap:
+    image: osixia/openldap:1.5.0
+    restart: always
+    command: --loglevel info
+    environment:
+      LDAP_ORGANISATION: Flowable
+      LDAP_DOMAIN: flowable.local
+      LDAP_BASE_DN: "dc=flowable,dc=local"
+      LDAP_ADMIN_PASSWORD: admin
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: "false"
+    volumes:
+      - data_ldap:/var/lib/ldap
+      - data_slapd:/etc/ldap/slapd.d
+      - ./ldap:/container/service/slapd/assets/config/bootstrap/ldif/custom
+    ports:
+      - "389:389"
+
+  # Optional web UI for browsing/debugging the LDAP directory: http://localhost:9096
+  flowable-phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    restart: always
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: flowable-openldap
+      PHPLDAPADMIN_HTTPS: "false"
+    ports:
+      - "9096:80"
+    depends_on:
+      - flowable-openldap
+
+  # Keeps its own DB (rather than the shared flowable-db) so it stays fully
+  # decoupled from the per-namespace Postgres databases above.
+  flowable-keycloak-db:
+    image: postgres:16.3
+    restart: always
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - data_keycloak_db:/var/lib/postgresql/data
+
+  # Backs stg's GitHub-OAuth2 demo login: federates the flowableAdministrator/
+  # flowableUser LDAP groups above and exposes them as flowable-work/
+  # flowable-control OIDC clients (see docker/keycloak/flowable-realm.json).
+  flowable-keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    restart: always
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: "jdbc:postgresql://flowable-keycloak-db:5432/keycloak"
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: "9095"
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+    ports:
+      - "9095:8080"
+    depends_on:
+      - flowable-keycloak-db
+      - flowable-openldap
+    volumes:
+      - ./keycloak/flowable-realm.json:/opt/keycloak/data/import/flowable-realm.json:ro
+
 volumes:
   data_db:
   data_index:
   data_ldap:
   data_slapd:
+  data_keycloak_db:
 
 # networks:
 #   flowable-db:

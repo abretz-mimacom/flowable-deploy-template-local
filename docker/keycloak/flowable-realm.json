@@ -1,0 +1,172 @@
+{
+  "realm": "flowable",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "clients": [
+    {
+      "clientId": "flowable-work",
+      "name": "Flowable Work",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "flowable-work-secret",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["http://localhost/stg/work/*"],
+      "webOrigins": ["http://localhost"],
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      },
+      "defaultClientScopes": ["openid", "profile", "email", "roles"],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "claim.name": "groups",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "flowable-control",
+      "name": "Flowable Control",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "flowable-control-secret",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["http://localhost/stg/control/*"],
+      "webOrigins": ["http://localhost"],
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      },
+      "defaultClientScopes": ["openid", "profile", "email", "roles"],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "claim.name": "groups",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "name": "ldap",
+        "providerId": "ldap",
+        "subComponents": {
+          "org.keycloak.storage.ldap.mappers.LDAPStorageMapper": [
+            {
+              "name": "group",
+              "providerId": "group-ldap-mapper",
+              "config": {
+                "mode": ["LDAP_ONLY"],
+                "membership.attribute.type": ["DN"],
+                "user.roles.retrieve.strategy": ["LOAD_GROUPS_BY_MEMBER_ATTRIBUTE"],
+                "group.name.ldap.attribute": ["cn"],
+                "membership.ldap.attribute": ["member"],
+                "membership.user.ldap.attribute": ["cn"],
+                "group.object.classes": ["groupOfNames"],
+                "groups.dn": ["ou=groups,dc=flowable,dc=local"],
+                "groups.path": ["/"],
+                "preserve.group.inheritance": ["true"],
+                "ignore.missing.groups": ["false"],
+                "drop.non.existing.groups.during.sync": ["false"]
+              }
+            },
+            {
+              "name": "username",
+              "providerId": "user-attribute-ldap-mapper",
+              "config": {
+                "ldap.attribute": ["cn"],
+                "is.mandatory.in.ldap": ["true"],
+                "always.read.value.from.ldap": ["false"],
+                "read.only": ["false"],
+                "user.model.attribute": ["username"]
+              }
+            },
+            {
+              "name": "email",
+              "providerId": "user-attribute-ldap-mapper",
+              "config": {
+                "ldap.attribute": ["mail"],
+                "is.mandatory.in.ldap": ["false"],
+                "read.only": ["false"],
+                "always.read.value.from.ldap": ["false"],
+                "user.model.attribute": ["email"]
+              }
+            },
+            {
+              "name": "first name",
+              "providerId": "user-attribute-ldap-mapper",
+              "config": {
+                "ldap.attribute": ["cn"],
+                "is.mandatory.in.ldap": ["true"],
+                "read.only": ["false"],
+                "always.read.value.from.ldap": ["true"],
+                "user.model.attribute": ["firstName"]
+              }
+            },
+            {
+              "name": "last name",
+              "providerId": "user-attribute-ldap-mapper",
+              "config": {
+                "ldap.attribute": ["sn"],
+                "is.mandatory.in.ldap": ["true"],
+                "read.only": ["false"],
+                "always.read.value.from.ldap": ["true"],
+                "user.model.attribute": ["lastName"]
+              }
+            }
+          ]
+        },
+        "config": {
+          "vendor": ["other"],
+          "usernameLDAPAttribute": ["cn"],
+          "rdnLDAPAttribute": ["cn"],
+          "uuidLDAPAttribute": ["entryUUID"],
+          "userObjectClasses": ["inetOrgPerson, organizationalPerson"],
+          "connectionUrl": ["ldap://flowable-openldap:389"],
+          "usersDn": ["ou=users,dc=flowable,dc=local"],
+          "authType": ["simple"],
+          "bindDn": ["cn=admin,dc=flowable,dc=local"],
+          "bindCredential": ["admin"],
+          "editMode": ["WRITABLE"],
+          "syncRegistrations": ["true"],
+          "importEnabled": ["true"],
+          "enabled": ["true"],
+          "pagination": ["true"],
+          "searchScope": ["1"],
+          "useTruststoreSpi": ["always"],
+          "fullSyncPeriod": ["604800"],
+          "changedSyncPeriod": ["86400"]
+        }
+      }
+    ]
+  }
+}
