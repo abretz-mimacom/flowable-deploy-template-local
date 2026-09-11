@@ -83,7 +83,7 @@ The original Codespaces setup always installed `actions-runner-controller` (ARC)
 DISABLE_ARC=false ./create-env.sh --all
 ```
 
-You'll be prompted for a GitHub PAT (`ARC_TOKEN`) with permission to register a self-hosted runner. It registers against `abretz-mimacom/flowable-models-deploy` by default - export `GITHUB_REPOSITORY=<owner>/<repo>` first to target a different one. Verify it came up with `kubectl -n ci get pods` - you should see a `repo-runner-*` pod, and its logs should end with something like:
+You'll be prompted for a GitHub PAT (`ARC_TOKEN`) with permission to register a self-hosted runner. It registers against `abretz-mimacom/flowable-deploy-template-local` by default - i.e. this repo, since that's what [.github/workflows/deploy-dev-qa.yml](.github/workflows/deploy-dev-qa.yml)'s `runs-on: [self-hosted, local]` actually needs. Export `GITHUB_REPOSITORY=<owner>/<repo>` first only if you've forked/renamed this repo. Verify it came up with `kubectl -n ci get pods` - you should see a `repo-runner-*` pod, and its logs should end with something like:
 ```
 √ Connected to GitHub
 Current runner version: '2.328.0'
