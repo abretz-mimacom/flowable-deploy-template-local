@@ -34,7 +34,7 @@ flowable:
         memory: "4Gi"
     metrics:
       enabled: true
-    javaOpts: "-XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0"
+    javaOpts: "-Djava.net.preferIPv4Stack=true -XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0"
     contextPath: /dev/work
     management:
       enabled: true
@@ -88,6 +88,7 @@ flowable:
       limits:
         cpu: "500m"
         memory: "1.5Gi"
+    javaOpts: "-Djava.net.preferIPv4Stack=true -XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0 -XX:MaxDirectMemorySize=128m"
     contextPath: /dev/design
     envVariables:
       flowable.design.model-locking.enabled: true
@@ -139,6 +140,7 @@ flowable:
     image:
       # tag: latest
       tag: 2026.1.3
+    javaOpts: "-Djava.net.preferIPv4Stack=true -XX:InitialRAMPercentage=70.0 -XX:MaxRAMPercentage=70.0 -XX:MinRAMPercentage=70.0 -XX:MaxDirectMemorySize=128m"
     envVariables:
       server.context: /dev/control
       spring.datasource.driver-class-name: org.postgresql.Driver
